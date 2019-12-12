@@ -1,0 +1,275 @@
+[Page 9]
+hdfs dfs -ls /tmp
+
+
+[Page 10, 11]
+hdfs dfs -put data/songs.csv  /tmp 
+
+[Page 12]
+hdfs dfs -ls /tmp 
+
+
+[Page 21]
+beeline -u jdbc:hive2://quickstart:10000 -n hive -p hive
+
+
+[Page 23]
+beeline>>> !connect  jdbc:hive2://quickstart:10000
+beeline>>> !exit
+beeline>>> !help
+beeline>>> !verbose
+
+
+[Page 24]
+beeline -u jdbc:hive2://quickstart:10000 -n hive -p hive -f show_db.hql
+beeline -u jdbc:hive2://quickstart:10000 -n hive -p hive -e "show databases;"
+beeline -u jdbc:hive2://quickstart:10000 -n hive -p hive -e "show databases;" --silent
+
+
+[Page 29]
+CREATE TABLE SONGS_<your_name> (
+song_id	STRING,
+song_length BIGINT,
+genre_ids STRING,
+artist_name STRING,
+composer STRING,
+lyricist STRING,
+language STRING
+)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY ','
+STORED AS TEXTFILE;
+
+
+[Page 30]
+hdfs dfs -put /data/songs.csv /tmp/songs_<your_name>.csv
+LOAD DATA INPATH '/tmp/songs_<your_name>.csv' INTO TABLE SONGS_<your_name>;
+hdfs dfs -put /data/songs.csv /user/hive/warehouse/songs_<your_name>
+
+
+[Page 32]
+CREATE TABLE SONGS_loc_<your_name> (
+song_id	STRING,
+song_length BIGINT,
+genre_ids STRING,
+artist_name STRING,
+composer STRING,
+lyricist STRING,
+language STRING
+)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY ','
+STORED AS TEXTFILE
+LOCATION "/tmp/<your_name>/songs"
+
+
+[Page 33]
+create table SONGS_archived_<your_name> like SONGS_<your_name>;
+
+
+[Page 34]
+CREATE TABLE SONGS_select_<your_name> AS
+SELECT 
+song_id, 
+composer 
+FROM SONGS_<your_name>
+
+
+[Page 35]
+CREATE EXTERNAL TABLE SONGS_external_<your_name> (
+song_id	STRING,
+song_length BIGINT,
+genre_ids STRING,
+artist_name STRING,
+composer STRING,
+lyricist STRING,
+language STRING
+)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY ','
+STORED AS TEXTFILE
+LOCATION "/tmp/<your_name>/songs";
+
+
+[Page 36]
+hdfs dfs -put /data/songs.csv /tmp/<your_name>/songs
+SELECT * FROM SONGS_external_<your_name> LIMIT 10;
+DROP TABLE SONGS_external_<your_name>;
+hdfs dfs -ls /tmp/songs.csv /tmp/<your_name>/songs
+
+
+[Page 37]
+Local file system
+/data/song_info.csv
+
+Header and types
+song_id  string
+name  string
+isrc  string
+
+
+[Page 40]
+CREATE TABLE SONGS_p_<your_name> (
+song_id	STRING,
+song_length BIGINT,
+artist_name STRING,
+composer STRING,
+lyricist STRING,
+language STRING
+)
+PARTITIONED BY (genre_ids STRING)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY ','
+STORED AS TEXTFILE;
+
+
+[Page 42]
+set hive.exec.dynamic.partition.mode=nonstrict;
+INSERT INTO SONGS_p_<your_name> 
+PARTITION(genre_ids)
+SELECT 
+song_id,    
+song_length,
+artist_name,
+composer,
+lyricist,
+language,
+genre_ids
+FROM SONGS_<your_name>;
+
+
+[Page 45]
+SELECT * FROM songs_p_<your_name>
+WHERE genre_ids='109';
+
+
+[Page 46]
+ALTER TABLE songs_p_<your_name> DROP PARTITION (genre_ids='109');
+
+
+[Page 50]
+CREATE TABLE SONGS_b_<your_name> (
+song_id	STRING,
+song_length BIGINT,
+genre_id STRING,
+artist_name STRING,
+composer STRING,
+lyricist STRING,
+language STRING
+)
+CLUSTERED BY (song_id) INTO 4 BUCKETS
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY ','
+STORED AS TEXTFILE;
+
+
+[Page 51]
+set hive.enforce.bucketing=true;
+
+INSERT INTO TABLE SONGS_b_<your_name>
+SELECT 
+song_id,	
+song_length,
+genre_ids,
+artist_name,
+composer,
+lyricist,
+language
+FROM SONGS_<your_name>;
+
+
+[Page 54]
+CREATE TABLE SONGS_pb_<your_name> (
+song_id	STRING,
+song_length BIGINT,
+artist_name STRING,
+composer STRING,
+lyricist STRING,
+language STRING
+)
+PARTITIONED BY (genre_ids STRING)
+CLUSTERED BY (song_id) INTO 4 BUCKETS
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY ','
+STORED AS TEXTFILE
+
+
+[Pagev55]
+set hive.exec.dynamic.partition.mode=nonstrict;
+set hive.enforce.bucketing=true;
+
+INSERT INTO SONGS_pb_<your_name> 
+PARTITION (genre_ids)
+SELECT 
+song_id,	
+song_length,
+artist_name,
+composer,
+lyricist,
+language,
+genre_ids
+FROM SONGS_<your_name>;
+
+
+[Page 63]
+CREATE TABLE SONGS_parquet_<your_name> (
+song_id	STRING,
+song_length BIGINT,
+genre_ids STRING,
+artist_name STRING,
+composer STRING,
+lyricist STRING,
+language STRING
+) 
+STORED AS PARQUET;
+
+
+[Page 65]
+EXPLAIN
+SELECT *
+FROM songs_<your_name> A
+JOIN songs_info_<your_name> B
+ON A.song_id=B.song_id
+
+
+[Page 67]
+ANALYZE TABLE songs_<your_name> COMPUTE STATISTICS;
+DESCRIBE EXTENDED TABLE songs_<your_name>;
+
+
+[Page 86]
+INVALIDATE METADATA;
+INVALIDATE METADATA table_name;
+
+
+[Page 88]
+REFRESH;
+REFRESH table_name;
+REFRESH table_name PARTITION partition_name;
+
+
+[Page 89]
+EXPLAIN
+SELECT *
+FROM songs_<your_name> A
+JOIN songs_info_<your_name> B
+ON A.song_id=B.song_id
+
+
+[Page 91]
+COMPUTE STATS table_name;
+
+COMPUTE INCREMENTAL STATS table_name;
+
+COMPUTE INCREMENTAL STATS table_name PARTITION (col='xxx');
+
+SHOW TABLE STATS table_name;
+SHOW COLUMN STATS table_name;
+
+
+[Page 97]
+impala-shell –i quickstart:21000
+
+
+[Page 99]
+impala-shell –i quickstart:21000 -q "show databases;"
