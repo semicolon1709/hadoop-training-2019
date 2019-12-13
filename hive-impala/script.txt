@@ -44,6 +44,9 @@ STORED AS TEXTFILE;
 [Page 30]
 hdfs dfs -put /data/songs.csv /tmp/songs_<your_name>.csv
 LOAD DATA INPATH '/tmp/songs_<your_name>.csv' INTO TABLE SONGS_<your_name>;
+
+TRUNCATE TABLE SONGS_<your_name>;
+SELECT COUNT(*) FROM SONGS_<your_name>;
 hdfs dfs -put /data/songs.csv /user/hive/warehouse/songs_<your_name>
 
 
@@ -234,7 +237,7 @@ ON A.song_id=B.song_id
 
 [Page 67]
 ANALYZE TABLE songs_<your_name> COMPUTE STATISTICS;
-DESCRIBE EXTENDED TABLE songs_<your_name>;
+DESCRIBE EXTENDED songs_<your_name>;
 
 
 [Page 86]
